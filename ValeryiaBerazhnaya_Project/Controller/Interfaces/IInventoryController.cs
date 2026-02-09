@@ -2,6 +2,6 @@
 {
     public interface IInventoryController
     {
-        void Run();
+        bool HandleCommand(string input);
     }
 }

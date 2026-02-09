@@ -5,133 +5,64 @@ namespace FurnitureWarehouse.Controller
 {
     public class InventoryController : IInventoryController
     {
-        private readonly IInventoryService _inventoryService;
+        private readonly IInventoryService _service;
 
-        public InventoryController(IInventoryService inventoryService)
+        public InventoryController(IInventoryService service)
         {
-            _inventoryService = inventoryService;
+            _service = service;
         }
 
-        public void Run()
+        public bool HandleCommand(string input)
         {
-            PrintHeader();
-            PrintMenu();
+            var command = input.Trim().ToLower();
 
-            while (true)
+            switch (command)
             {
-                Console.Write("\n> ");
-                var input = Console.ReadLine();
+                case "list":
+                    Print(_service.GetAll());
+                    break;
 
-                if (string.IsNullOrWhiteSpace(input))
-                    continue;
+                case "search-name":
+                    Console.Write("Enter name: ");
+                    var name = Console.ReadLine();
+                    Print(_service.SearchByName(name ?? ""));
+                    break;
 
-                var command = input.Trim().ToLower();
+                case "search-category":
+                    Console.Write("Enter category: ");
+                    var category = Console.ReadLine();
+                    Print(_service.SearchByCategory(category ?? ""));
+                    break;
 
-                switch (command)
-                {
-                    case "1":
-                        ShowAll();
-                        break;
+                case "help":
+                    return false;
 
-                    case "2":
-                        SearchByName();
-                        break;
+                case "exit":
+                    return true;
 
-                    case "3":
-                        SearchByCategory();
-                        break;
-
-                    case "4":
-                        Console.WriteLine("Goodbye!");
-                        return;
-
-                    case "5":
-                        PrintMenu();
-                        break;
-
-                    default:
-                        Console.WriteLine("Unknown command. Type 'help' to see available commands.");
-                        break;
-                }
+                default:
+                    Console.WriteLine("Unknown command");
+                    break;
             }
+
+            return false;
         }
 
-        private void PrintHeader()
+        private void Print(IEnumerable<Domain.Entities.Furniture> items)
         {
-            Console.WriteLine("===================================");
-            Console.WriteLine(" Furniture Warehouse System v1.0");
-            Console.WriteLine(" Created: 2026");
-            Console.WriteLine(" Developer: Valeria Berezhnaya");
-            Console.WriteLine(" Email: valeryia.berazhnaya@stud.esdc.lt");
-            Console.WriteLine("===================================");
-        }
-
-        private void PrintMenu()
-        {
-            Console.WriteLine("\nAvailable commands:");
-            Console.WriteLine(" 1 - Show all furniture");
-            Console.WriteLine(" 2 - Search furniture by name");
-            Console.WriteLine(" 3 - Search furniture by category");
-            Console.WriteLine(" 4 - Show this menu");
-            Console.WriteLine(" 5 - Exit application");
-        }
-
-        private void ShowAll()
-        {
-            var items = _inventoryService.GetAll();
-
             if (!items.Any())
-            {
-                Console.WriteLine("Inventory is empty.");
-                return;
-            }
-
-            foreach (var item in items)
-            {
-                PrintFurniture(item);
-            }
-        }
-
-        private void SearchByName()
-        {
-            Console.Write("Enter name: ");
-            var name = Console.ReadLine();
-
-            var results = _inventoryService.SearchByName(name ?? "");
-
-            PrintResults(results);
-        }
-
-        private void SearchByCategory()
-        {
-            Console.Write("Enter category: ");
-            var category = Console.ReadLine();
-
-            var results = _inventoryService.SearchByCategory(category ?? "");
-
-            PrintResults(results);
-        }
-
-        private void PrintResults(IEnumerable<Domain.Entities.Furniture> results)
-        {
-            if (!results.Any())
             {
                 Console.WriteLine("No products found.");
                 return;
             }
 
-            foreach (var item in results)
+            foreach (var f in items)
             {
-                PrintFurniture(item);
+                Console.WriteLine(
+                    $"ID: {f.Id}, Name: {f.Name}, Category: {f.Category}, " +
+                    $"Price: {f.Price}, Quantity: {f.Quantity}"
+                );
             }
-        }
-
-        private void PrintFurniture(Domain.Entities.Furniture f)
-        {
-            Console.WriteLine(
-                $"ID: {f.Id}, Name: {f.Name}, Category: {f.Category}, " +
-                $"Price: {f.Price}, Quantity: {f.Quantity}"
-            );
         }
     }
 }
