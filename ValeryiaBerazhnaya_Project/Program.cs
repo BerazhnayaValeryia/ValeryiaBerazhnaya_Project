@@ -1,10 +1,15 @@
-﻿using FurnitureWarehouse.DataAccess.FileSystem;
+﻿using FurnitureWarehouse.Controller;
+using FurnitureWarehouse.DataAccess.FileSystem;
+using FurnitureWarehouse.Service;
 
-Console.WriteLine(Directory.GetCurrentDirectory());
-
-var repository = new FileFurnitureRepository("inventory.txt");
-
-foreach (var item in repository.GetAll())
+class Program
 {
-    Console.WriteLine($"{item.Id} - {item.Name}");
+    static void Main()
+    {
+        var repository = new FileFurnitureRepository("inventory.txt");
+        var inventoryService = new InventoryService(repository);
+        var controller = new InventoryController(inventoryService);
+
+        controller.Run();
+    }
 }
