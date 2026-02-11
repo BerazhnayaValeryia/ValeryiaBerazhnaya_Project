@@ -1,8 +1,7 @@
-﻿using FurnitureWarehouse.DataAccess.Interfaces;
-using FurnitureWarehouse.Domain.Entities;
+﻿using FurnitureWarehouse.Domain.Entities;
 using FurnitureWarehouse.Domain.Enums;
 
-namespace FurnitureWarehouse.DataAccess.FileSystem
+namespace FurnitureWarehouse.DataAccess
 {
     public class FileFurnitureRepository : IFurnitureRepository
     {
@@ -47,5 +46,20 @@ namespace FurnitureWarehouse.DataAccess.FileSystem
 
             return new Furniture(id, name, category, price, quantity);
         }
+
+        public IEnumerable<Furniture> SearchByName(string name) =>
+    GetAll().Where(f => f.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
+
+        public IEnumerable<Furniture> SearchByCategory(FurnitureCategory category) =>
+            GetAll().Where(f => f.Category == category);
+
+        public void Add(Furniture furniture) =>
+            throw new NotSupportedException("File storage is read-only.");
+
+        public void Update(int id, decimal price, int quantity) =>
+            throw new NotSupportedException("File storage is read-only.");
+
+        public void Delete(int id) =>
+            throw new NotSupportedException("File storage is read-only.");
     }
 }

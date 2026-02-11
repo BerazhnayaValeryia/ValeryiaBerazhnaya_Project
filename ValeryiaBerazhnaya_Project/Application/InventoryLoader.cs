@@ -1,5 +1,5 @@
 ﻿using FurnitureWarehouse.Domain.Entities;
-using FurnitureWarehouse.DataAccess.Interfaces;
+using FurnitureWarehouse.DataAccess;
 
 public class InventoryLoader
 {

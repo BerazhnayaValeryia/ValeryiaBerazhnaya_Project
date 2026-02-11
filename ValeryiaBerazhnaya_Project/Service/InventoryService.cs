@@ -1,40 +1,27 @@
-﻿using FurnitureWarehouse.DataAccess.Interfaces;
+﻿using FurnitureWarehouse.DataAccess;
 using FurnitureWarehouse.Domain.Entities;
 using FurnitureWarehouse.Domain.Enums;
-using FurnitureWarehouse.Domain.Services;
 using FurnitureWarehouse.Service.Interfaces;
 
 namespace FurnitureWarehouse.Service
 {
     public class InventoryService : IInventoryService
     {
-        private readonly Inventory _inventory;
-        private readonly FurnitureSearchService _searchService;
+        private readonly IFurnitureRepository _repository;
 
         public InventoryService(IFurnitureRepository repository)
         {
-            var loader = new InventoryLoader(repository);
-            _inventory = loader.Load();
-
-            _searchService = new FurnitureSearchService();
-        }
-
-        public Inventory LoadInventory()
-        {
-            return _inventory;
+            _repository = repository;
         }
 
         public IEnumerable<Furniture> GetAll()
         {
-            return _inventory.Furnitures;
+            return _repository.GetAll();
         }
 
         public IEnumerable<Furniture> SearchByName(string name)
         {
-            return _searchService.SearchByName(
-                _inventory.Furnitures,
-                name
-            );
+            return _repository.SearchByName(name);
         }
 
         public IEnumerable<Furniture> SearchByCategory(string category)
@@ -42,10 +29,23 @@ namespace FurnitureWarehouse.Service
             if (!Enum.TryParse<FurnitureCategory>(category, true, out var parsed))
                 return Enumerable.Empty<Furniture>();
 
-            return _searchService.SearchByCategory(
-                _inventory.Furnitures,
-                parsed
-            );
+            return _repository.SearchByCategory(parsed);
+        }
+
+        public void Add(string name, FurnitureCategory category, decimal price, int quantity)
+        {
+            var furniture = new Furniture(0, name, category, price, quantity);
+            _repository.Add(furniture);
+        }
+
+        public void Update(int id, decimal price, int quantity)
+        {
+            _repository.Update(id, price, quantity);
+        }
+
+        public void Delete(int id)
+        {
+            _repository.Delete(id);
         }
     }
 }

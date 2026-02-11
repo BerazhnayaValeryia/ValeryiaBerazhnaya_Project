@@ -1,5 +1,8 @@
-﻿using FurnitureWarehouse.Controller;
-using FurnitureWarehouse.DataAccess.FileSystem;
+﻿using Application;
+using DataAccess.Database;
+using DataAccess.Repositories;
+using Domain.Enums;
+using FurnitureWarehouse.Controller;
 using FurnitureWarehouse.Main.Configuration;
 using FurnitureWarehouse.Presentation;
 using FurnitureWarehouse.Service;
@@ -17,14 +20,19 @@ namespace FurnitureWarehouse.Main
 
         public ConsoleView CreateView()
         {
-            var inventoryPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                _config.InventoryFile
-            );
+            var connectionString = "Data Source=furniture.db";
 
-            var repository = new FileFurnitureRepository(inventoryPath);
+            var context = new SqliteDbContext(connectionString);
+
+            using var connection = context.CreateConnection();
+            DbInitializer.Initialize(connection);
+
+            var repository = new DbFurnitureRepository(context);
             var service = new InventoryService(repository);
-            var controller = new InventoryController(service);
+
+            var userContext = new UserContext();
+
+            var controller = new InventoryController(service, userContext);
 
             return new ConsoleView(controller);
         }

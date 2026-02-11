@@ -12,8 +12,8 @@ namespace FurnitureWarehouse.Domain.Entities
 
         public Furniture(int id, string name, FurnitureCategory category, decimal price, int quantity)
         {
-            if (id <= 0)
-                throw new ArgumentException("Id must be positive.");
+            if (id < 0)
+                throw new ArgumentException("Id cannot be negative.");
 
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name cannot be empty.");

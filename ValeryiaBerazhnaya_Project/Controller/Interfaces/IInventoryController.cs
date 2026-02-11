@@ -3,5 +3,6 @@
     public interface IInventoryController
     {
         bool HandleCommand(string input);
+        bool IsAdmin();
     }
 }

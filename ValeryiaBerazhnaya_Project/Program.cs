@@ -1,24 +1,12 @@
 ﻿using FurnitureWarehouse.Main;
 using FurnitureWarehouse.Main.Configuration;
 
-class Program
+var config = new AppConfiguration
 {
-    static void Main(string[] args)
-    {
-        try
-        {
-            ConfigurationManager.Initialize();
-            var config = ConfigurationManager.GetConfiguration();
+    InventoryFile = "inventory.txt"
+};
 
-            var startup = new Startup(config);
-            var view = startup.CreateView();
+var startup = new Startup(config);
+var view = startup.CreateView();
 
-            view.Start();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Critical error occurred.");
-            Console.WriteLine(ex.Message);
-        }
-    }
-}
+view.Run();
