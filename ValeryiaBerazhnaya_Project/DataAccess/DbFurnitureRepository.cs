@@ -14,7 +14,6 @@ namespace DataAccess.Repositories
             _context = context;
 
             using var connection = _context.CreateConnection();
-            DbInitializer.Initialize(connection);
         }
 
         public IEnumerable<Furniture> GetAll()

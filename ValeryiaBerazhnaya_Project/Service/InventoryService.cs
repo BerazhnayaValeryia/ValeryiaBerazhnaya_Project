@@ -46,5 +46,30 @@ namespace FurnitureWarehouse.Service
         {
             _repository.Delete(id);
         }
+
+        public Furniture? GetById(int id)
+        {
+            return _repository.GetAll().FirstOrDefault(f => f.Id == id);
+        }
+
+        public IEnumerable<Furniture> GetByPriceRange(decimal min, decimal max)
+        {
+            return _repository
+                .GetAll()
+                .Where(f => f.Price >= min && f.Price <= max);
+        }
+
+        public IEnumerable<Furniture> GetByCategoryAndPrice(string category, decimal min, decimal max)
+        {
+            if (!Enum.TryParse<FurnitureCategory>(category, true, out var parsed))
+                return Enumerable.Empty<Furniture>();
+
+            return _repository
+                .GetAll()
+                .Where(f =>
+                    f.Category == parsed &&
+                    f.Price >= min &&
+                    f.Price <= max);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Application;
 using Domain.Enums;
 using FurnitureWarehouse.Controller.Interfaces;
+using FurnitureWarehouse.Domain.Enums;
 using FurnitureWarehouse.Service.Interfaces;
 
 namespace FurnitureWarehouse.Controller
@@ -27,7 +28,11 @@ namespace FurnitureWarehouse.Controller
 
         public CommandResult HandleCommand(string input)
         {
-            var command = input.Trim().ToLower();
+            var parts = input.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+                return CommandResult.None;
+
+            var command = parts[0].ToLower();
 
             switch (command)
             {
@@ -81,19 +86,85 @@ namespace FurnitureWarehouse.Controller
                     break;
 
                 case "search-name":
-                    Console.Write("Enter name: ");
-                    var name = Console.ReadLine();
-                    Print(_service.SearchByName(name ?? ""));
+                    if (parts.Length < 2)
+                    {
+                        Console.WriteLine("Usage: search-name <name>");
+                        break;
+                    }
+
+                    var name = string.Join(" ", parts.Skip(1));
+                    Print(_service.SearchByName(name));
                     break;
 
                 case "search-category":
-                    Console.Write("Enter category: ");
-                    var category = Console.ReadLine();
-                    Print(_service.SearchByCategory(category ?? ""));
+                    if (parts.Length < 2)
+                    {
+                        Console.WriteLine("Usage: search-category <category>");
+                        break;
+                    }
+
+                    var categoryInput = parts[1];
+
+                    if (!Enum.TryParse<Domain.Enums.FurnitureCategory>(
+                        categoryInput, true, out var category))
+                    {
+                        Console.WriteLine("Invalid category.");
+                        break;
+                    }
+
+                    Print(_service.SearchByCategory(category.ToString()));
                     break;
 
                 case "exit":
                     return CommandResult.Exit;
+
+                case "show":
+                    if (parts.Length != 2 || !int.TryParse(parts[1], out var id))
+                    {
+                        Console.WriteLine("Usage: show <id>");
+                        break;
+                    }
+
+                    var item = _service.GetById(id);
+                    if (item == null)
+                    {
+                        Console.WriteLine("Item not found.");
+                        break;
+                    }
+
+                    Print(new List<Domain.Entities.Furniture> { item });
+                    break;
+
+                case "price":
+                    if (parts.Length != 3 ||
+                        !decimal.TryParse(parts[1], out var min) ||
+                        !decimal.TryParse(parts[2], out var max))
+                    {
+                        Console.WriteLine("Usage: price <min> <max>");
+                        break;
+                    }
+
+                    Print(_service.GetByPriceRange(min, max));
+                    break;
+
+                case "price-category":
+                    if (parts.Length != 4 ||
+                        !decimal.TryParse(parts[2], out var minCat) ||
+                        !decimal.TryParse(parts[3], out var maxCat))
+                    {
+                        Console.WriteLine("Usage: price-category <category> <min> <max>");
+                        break;
+                    }
+
+                    if (!Enum.TryParse<Domain.Enums.FurnitureCategory>(
+                        parts[1], true, out var cat))
+                    {
+                        Console.WriteLine("Invalid category.");
+                        break;
+                    }
+
+                    Print(_service.GetByCategoryAndPrice(cat.ToString(), minCat, maxCat));
+                    break;
 
                 default:
                     Console.WriteLine("Unknown command");
@@ -122,47 +193,76 @@ namespace FurnitureWarehouse.Controller
 
         private void AddItem()
         {
-            Console.Write("Name: ");
-            var name = Console.ReadLine();
+            Console.WriteLine("=== Add New Furniture ===");
 
-            Console.Write("Category: ");
-            var categoryInput = Console.ReadLine();
-            var category = Enum.Parse<Domain.Enums.FurnitureCategory>(categoryInput!, true);
+            var categories = Enum.GetValues<FurnitureCategory>();
 
-            Console.Write("Price: ");
-            var price = decimal.Parse(Console.ReadLine()!);
+            Console.WriteLine("Select category:");
 
-            Console.Write("Quantity: ");
-            var quantity = int.Parse(Console.ReadLine()!);
+            for (int i = 0; i < categories.Length; i++)
+            {
+                Console.WriteLine($"{i + 1}. {categories[i]}");
+            }
 
-            _service.Add(name!, category, price, quantity);
+            var categoryNumber = ReadInt("Category number");
+            if (categoryNumber == null) return;
 
-            Console.WriteLine("Item added successfully.");
+            if (categoryNumber < 1 || categoryNumber > categories.Length)
+            {
+                WriteError("Selected category does not exist.");
+                return;
+            }
+
+            var category = categories[categoryNumber.Value - 1];
+
+            var name = ReadNonEmptyString("Name");
+            if (name == null) return;
+
+            var price = ReadDecimal("Price");
+            if (price == null) return;
+
+            var quantity = ReadInt("Quantity");
+            if (quantity == null) return;
+
+            try
+            {
+                _service.Add(name, category, price.Value, quantity.Value);
+                Console.WriteLine("\nItem added successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                WriteError($"Error: {ex.Message}");
+            }
         }
 
         private void UpdateItem()
         {
-            Console.Write("Enter ID: ");
-            var id = int.Parse(Console.ReadLine()!);
+            var id = ReadInt("Enter ID");
+            if (id == null) return;
 
-            Console.Write("New price: ");
-            var price = decimal.Parse(Console.ReadLine()!);
+            var price = ReadDecimal("New price");
+            if (price == null) return;
 
-            Console.Write("New quantity: ");
-            var quantity = int.Parse(Console.ReadLine()!);
+            var quantity = ReadInt("New quantity");
+            if (quantity == null) return;
 
-            _service.Update(id, price, quantity);
-
-            Console.WriteLine("Item updated successfully.");
+            try
+            {
+                _service.Update(id.Value, price.Value, quantity.Value);
+                Console.WriteLine("Item updated successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                WriteError($"Error: {ex.Message}");
+            }
         }
 
         private void DeleteItem()
         {
-            Console.Write("Enter ID: ");
-            var id = int.Parse(Console.ReadLine()!);
+            var id = ReadInt("Enter ID");
+            if (id == null) return;
 
-            _service.Delete(id);
-
+            _service.Delete(id.Value);
             Console.WriteLine("Item deleted successfully.");
         }
 
@@ -237,6 +337,86 @@ namespace FurnitureWarehouse.Controller
 
             Console.WriteLine();
             return password;
+        }
+
+        private void WriteError(string message)
+        {
+            var originalColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(message);
+            Console.ForegroundColor = originalColor;
+        }
+
+        private string? ReadNonEmptyString(string label)
+        {
+            while (true)
+            {
+                Console.Write($"{label} (or 'q' to cancel): ");
+                var input = Console.ReadLine();
+
+                if (input?.ToLower() == "q")
+                    return null;
+
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    WriteError("Value cannot be empty.\n");
+                    continue;
+                }
+
+                return input;
+            }
+        }
+
+        private decimal? ReadDecimal(string label)
+        {
+            while (true)
+            {
+                Console.Write($"{label} (or 'q' to cancel): ");
+                var input = Console.ReadLine();
+
+                if (input?.ToLower() == "q")
+                    return null;
+
+                if (!decimal.TryParse(input, out var value))
+                {
+                    WriteError("Must be a valid number.\n");
+                    continue;
+                }
+
+                if (value < 0)
+                {
+                    WriteError("Value cannot be negative.\n");
+                    continue;
+                }
+
+                return value;
+            }
+        }
+
+        private int? ReadInt(string label)
+        {
+            while (true)
+            {
+                Console.Write($"{label} (or 'q' to cancel): ");
+                var input = Console.ReadLine();
+
+                if (input?.ToLower() == "q")
+                    return null;
+
+                if (!int.TryParse(input, out var value))
+                {
+                    WriteError("Must be a whole number.\n");
+                    continue;
+                }
+
+                if (value < 0)
+                {
+                    WriteError("Value cannot be negative.\n");
+                    continue;
+                }
+
+                return value;
+            }
         }
     }
 }
