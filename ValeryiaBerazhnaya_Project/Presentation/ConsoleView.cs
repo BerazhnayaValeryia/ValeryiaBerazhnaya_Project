@@ -83,6 +83,7 @@ namespace FurnitureWarehouse.Presentation
 
         public void Run()
         {
+            ApplyRoleStyle();
             PrintHeader();
             PrintMenu();
 
@@ -90,50 +91,98 @@ namespace FurnitureWarehouse.Presentation
 
             while (!exit)
             {
-                Console.Write("> ");
+                var roleLabel = _controller.IsAdmin() ? "[ADMIN]" : "[USER]";
+                Console.Write($"{roleLabel} Enter command: ");
+
                 var input = Console.ReadLine();
 
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
-                exit = _controller.HandleCommand(input);
-
-                if (!exit)
+                if (input.Trim().ToLower() == "help")
                 {
                     Console.WriteLine();
                     PrintMenu();
+                    continue;
+                }
+
+                var result = _controller.HandleCommand(input);
+
+                switch (result)
+                {
+                    case CommandResult.Exit:
+                        exit = true;
+                        break;
+
+                    case CommandResult.RoleChanged:
+                        ApplyRoleStyle();
+                        PrintHeader();
+                        PrintMenu();
+                        break;
                 }
             }
 
+            Console.ResetColor();
             Console.WriteLine("Application closed.");
         }
 
         private void PrintHeader()
         {
-            Console.WriteLine("Furniture Warehouse System");
-            Console.WriteLine("Version 1.0");
+            var role = _controller.GetCurrentRole();
+
             Console.WriteLine("Created: 2026");
-            Console.WriteLine();
         }
 
         private void PrintMenu()
         {
-            Console.WriteLine("Available commands:");
-            Console.WriteLine("list");
-            Console.WriteLine("search-name");
-            Console.WriteLine("search-category");
-            Console.WriteLine("login");
-            Console.WriteLine("logout");
-            Console.WriteLine("help");
-            Console.WriteLine("exit");
+            Console.WriteLine("==================================================");
+            Console.WriteLine("      Furniture Warehouse Management System v1.0");
+            Console.WriteLine("==================================================");
+            Console.WriteLine();
+
+            Console.WriteLine("=============== Available Commands ===============");
+            Console.WriteLine();
+
+            Console.WriteLine("Query commands:");
+            Console.WriteLine("   list                         - Show all furniture");
+            Console.WriteLine("   search-name                  - Search by name");
+            Console.WriteLine("   search-category              - Search by category");
             Console.WriteLine();
 
             if (_controller.IsAdmin())
             {
-                Console.WriteLine("add");
-                Console.WriteLine("update");
-                Console.WriteLine("delete");
+                Console.WriteLine("Admin commands:");
+                Console.WriteLine("   add                          - Add new furniture item");
+                Console.WriteLine("   update                       - Update price and quantity");
+                Console.WriteLine("   delete                       - Delete item by ID");
+                Console.WriteLine();
             }
+
+            Console.WriteLine("Mode commands:");
+            Console.WriteLine("   login                        - Switch to admin mode");
+            Console.WriteLine("   logout                       - Return to user mode");
+            Console.WriteLine();
+
+            Console.WriteLine("Other commands:");
+            Console.WriteLine("   help                         - Show this menu");
+            Console.WriteLine("   exit                         - Exit application");
+            Console.WriteLine();
+        }
+
+        private void ApplyRoleStyle()
+        {
+            if (_controller.IsAdmin())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+            }
+
+            Console.Clear();
         }
     }
 }

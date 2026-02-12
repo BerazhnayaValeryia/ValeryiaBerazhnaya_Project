@@ -1,8 +1,12 @@
-﻿namespace FurnitureWarehouse.Controller.Interfaces
+﻿using Domain.Enums;
+
+namespace FurnitureWarehouse.Controller.Interfaces
 {
     public interface IInventoryController
     {
-        bool HandleCommand(string input);
+        CommandResult HandleCommand(string input);
+
         bool IsAdmin();
+        UserRole GetCurrentRole();
     }
 }

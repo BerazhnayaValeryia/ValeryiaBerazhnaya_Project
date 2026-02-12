@@ -1,4 +1,5 @@
 ﻿using Application;
+using Domain.Enums;
 using FurnitureWarehouse.Controller.Interfaces;
 using FurnitureWarehouse.Service.Interfaces;
 
@@ -24,33 +25,29 @@ namespace FurnitureWarehouse.Controller
             _service = service;
         }
 
-        public bool HandleCommand(string input)
+        public CommandResult HandleCommand(string input)
         {
             var command = input.Trim().ToLower();
 
             switch (command)
             {
-                case "list":
-                    Print(_service.GetAll());
-                    break;
+                case "login":
+                    {
+                        var before = _userContext.IsAdmin;
+                        Login();
+                        return before != _userContext.IsAdmin
+                            ? CommandResult.RoleChanged
+                            : CommandResult.None;
+                    }
 
-                case "search-name":
-                    Console.Write("Enter name: ");
-                    var name = Console.ReadLine();
-                    Print(_service.SearchByName(name ?? ""));
-                    break;
-
-                case "search-category":
-                    Console.Write("Enter category: ");
-                    var category = Console.ReadLine();
-                    Print(_service.SearchByCategory(category ?? ""));
-                    break;
-
-                case "help":
-                    return false;
-
-                case "exit":
-                    return true;
+                case "logout":
+                    {
+                        var before = _userContext.IsAdmin;
+                        Logout();
+                        return before != _userContext.IsAdmin
+                            ? CommandResult.RoleChanged
+                            : CommandResult.None;
+                    }
 
                 case "add":
                     if (!_userContext.IsAdmin)
@@ -79,28 +76,31 @@ namespace FurnitureWarehouse.Controller
                     DeleteItem();
                     break;
 
-                case "login":
-                    Login();
+                case "list":
+                    Print(_service.GetAll());
                     break;
 
-                case "logout":
-                    Logout();
+                case "search-name":
+                    Console.Write("Enter name: ");
+                    var name = Console.ReadLine();
+                    Print(_service.SearchByName(name ?? ""));
                     break;
 
-                //case "login":
-                //    HandleLogin();
-                //    return false; // НЕ выход
+                case "search-category":
+                    Console.Write("Enter category: ");
+                    var category = Console.ReadLine();
+                    Print(_service.SearchByCategory(category ?? ""));
+                    break;
 
-                //case "logout":
-                //    HandleLogout();
-                //    return false;
+                case "exit":
+                    return CommandResult.Exit;
 
                 default:
                     Console.WriteLine("Unknown command");
                     break;
             }
 
-            return false;
+            return CommandResult.None;
         }
 
         private void Print(IEnumerable<Domain.Entities.Furniture> items)
@@ -178,7 +178,7 @@ namespace FurnitureWarehouse.Controller
             var login = Console.ReadLine();
 
             Console.Write("Password: ");
-            var password = Console.ReadLine();
+            var password = ReadPassword();
 
             if (_loginService.TryLogin(login!, password!, _userContext))
             {
@@ -205,6 +205,38 @@ namespace FurnitureWarehouse.Controller
         public bool IsAdmin()
         {
             return _userContext.IsAdmin;
+        }
+
+        public UserRole GetCurrentRole()
+        {
+            return _userContext.Role;
+        }
+
+        private string ReadPassword()
+        {
+            var password = string.Empty;
+            ConsoleKey key;
+
+            do
+            {
+                var keyInfo = Console.ReadKey(intercept: true);
+                key = keyInfo.Key;
+
+                if (key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password = password[0..^1];
+                    Console.Write("\b \b");
+                }
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    password += keyInfo.KeyChar;
+                    Console.Write("*");
+                }
+
+            } while (key != ConsoleKey.Enter);
+
+            Console.WriteLine();
+            return password;
         }
     }
 }

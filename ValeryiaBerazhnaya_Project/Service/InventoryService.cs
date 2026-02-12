@@ -1,5 +1,4 @@
-﻿using FurnitureWarehouse.DataAccess;
-using FurnitureWarehouse.Domain.Entities;
+﻿using FurnitureWarehouse.Domain.Entities;
 using FurnitureWarehouse.Domain.Enums;
 using FurnitureWarehouse.Service.Interfaces;
 
