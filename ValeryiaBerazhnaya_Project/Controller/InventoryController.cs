@@ -21,11 +21,6 @@ namespace FurnitureWarehouse.Controller
             _loginService = new LoginService();
         }
 
-        public InventoryController(IInventoryService service)
-        {
-            _service = service;
-        }
-
         public CommandResult HandleCommand(string input)
         {
             var parts = input.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -136,35 +131,60 @@ namespace FurnitureWarehouse.Controller
                     break;
 
                 case "price":
-                    if (parts.Length != 3 ||
-                        !decimal.TryParse(parts[1], out var min) ||
-                        !decimal.TryParse(parts[2], out var max))
                     {
-                        Console.WriteLine("Usage: price <min> <max>");
+                        while (true)
+                        {
+                            if (parts.Length != 3 ||
+                                !decimal.TryParse(parts[1], out var min) ||
+                                !decimal.TryParse(parts[2], out var max))
+                            {
+                                WriteError("Usage: price <min> <max>");
+                                break;
+                            }
+
+                            try
+                            {
+                                Print(_service.GetByPriceRange(min, max));
+                                break;
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                WriteError(ex.Message);
+                                break;
+                            }
+                        }
+
                         break;
                     }
-
-                    Print(_service.GetByPriceRange(min, max));
-                    break;
 
                 case "price-category":
-                    if (parts.Length != 4 ||
-                        !decimal.TryParse(parts[2], out var minCat) ||
-                        !decimal.TryParse(parts[3], out var maxCat))
                     {
-                        Console.WriteLine("Usage: price-category <category> <min> <max>");
+                        if (parts.Length != 4 ||
+                            !decimal.TryParse(parts[2], out var minCat) ||
+                            !decimal.TryParse(parts[3], out var maxCat))
+                        {
+                            WriteError("Usage: price-category <category> <min> <max>");
+                            break;
+                        }
+
+                        if (!Enum.TryParse<FurnitureCategory>(
+                            parts[1], true, out var cat))
+                        {
+                            WriteError("Invalid category.");
+                            break;
+                        }
+
+                        try
+                        {
+                            Print(_service.GetByCategoryAndPrice(cat.ToString(), minCat, maxCat));
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            WriteError(ex.Message);
+                        }
+
                         break;
                     }
-
-                    if (!Enum.TryParse<Domain.Enums.FurnitureCategory>(
-                        parts[1], true, out var cat))
-                    {
-                        Console.WriteLine("Invalid category.");
-                        break;
-                    }
-
-                    Print(_service.GetByCategoryAndPrice(cat.ToString(), minCat, maxCat));
-                    break;
 
                 default:
                     Console.WriteLine("Unknown command");
@@ -262,8 +282,15 @@ namespace FurnitureWarehouse.Controller
             var id = ReadInt("Enter ID");
             if (id == null) return;
 
-            _service.Delete(id.Value);
-            Console.WriteLine("Item deleted successfully.");
+            try
+            {
+                _service.Delete(id.Value);
+                Console.WriteLine("Item deleted successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                WriteError($"Error: {ex.Message}");
+            }
         }
 
         private void Login()

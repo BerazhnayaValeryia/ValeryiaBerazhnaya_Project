@@ -92,30 +92,39 @@ namespace DataAccess.Repositories
         public void Update(int id, decimal price, int quantity)
         {
             using var connection = _context.CreateConnection();
+            connection.Open();
+
             var command = connection.CreateCommand();
             command.CommandText =
             """
-            UPDATE Furniture
-            SET Price = @price, Quantity = @quantity
-            WHERE Id = @id
+                 UPDATE Furniture
+                 SET Price = @price, Quantity = @quantity
+                 WHERE Id = @id
             """;
 
             command.Parameters.AddWithValue("@id", id);
             command.Parameters.AddWithValue("@price", price);
             command.Parameters.AddWithValue("@quantity", quantity);
 
-            command.ExecuteNonQuery();
+            var rowsAffected = command.ExecuteNonQuery();
+
+            if (rowsAffected == 0)
+                throw new ArgumentException("Item with this ID does not exist.");
         }
 
         public void Delete(int id)
         {
             using var connection = _context.CreateConnection();
+            connection.Open();
+
             var command = connection.CreateCommand();
-            command.CommandText =
-                "DELETE FROM Furniture WHERE Id = @id";
+            command.CommandText = "DELETE FROM Furniture WHERE Id = @id";
             command.Parameters.AddWithValue("@id", id);
 
-            command.ExecuteNonQuery();
+            var rowsAffected = command.ExecuteNonQuery();
+
+            if (rowsAffected == 0)
+                throw new ArgumentException("Item with this ID does not exist.");
         }
 
         private Furniture Map(SqliteDataReader reader)
@@ -127,6 +136,102 @@ namespace DataAccess.Repositories
                 reader.GetDecimal(3),
                 reader.GetInt32(4)
             );
+        }
+
+        public Furniture? GetById(int id)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+        SELECT Id, Name, Category, Price, Quantity
+        FROM Furniture
+        WHERE Id = @id";
+
+            command.Parameters.AddWithValue("@id", id);
+
+            using var reader = command.ExecuteReader();
+
+            if (!reader.Read())
+                return null;
+
+            return new Furniture(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                Enum.Parse<FurnitureCategory>(reader.GetString(2)),
+                reader.GetDecimal(3),
+                reader.GetInt32(4)
+            );
+        }
+
+        public IEnumerable<Furniture> GetByPriceRange(decimal min, decimal max)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+        SELECT Id, Name, Category, Price, Quantity
+        FROM Furniture
+        WHERE Price BETWEEN @min AND @max";
+
+            command.Parameters.AddWithValue("@min", min);
+            command.Parameters.AddWithValue("@max", max);
+
+            using var reader = command.ExecuteReader();
+
+            var list = new List<Furniture>();
+
+            while (reader.Read())
+            {
+                list.Add(new Furniture(
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    Enum.Parse<FurnitureCategory>(reader.GetString(2)),
+                    reader.GetDecimal(3),
+                    reader.GetInt32(4)
+                ));
+            }
+
+            return list;
+        }
+
+        public IEnumerable<Furniture> GetByCategoryAndPrice(
+    FurnitureCategory category,
+    decimal min,
+    decimal max)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+        SELECT Id, Name, Category, Price, Quantity
+        FROM Furniture
+        WHERE Category = @category
+        AND Price BETWEEN @min AND @max";
+
+            command.Parameters.AddWithValue("@category", category.ToString());
+            command.Parameters.AddWithValue("@min", min);
+            command.Parameters.AddWithValue("@max", max);
+
+            using var reader = command.ExecuteReader();
+
+            var list = new List<Furniture>();
+
+            while (reader.Read())
+            {
+                list.Add(new Furniture(
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    Enum.Parse<FurnitureCategory>(reader.GetString(2)),
+                    reader.GetDecimal(3),
+                    reader.GetInt32(4)
+                ));
+            }
+
+            return list;
         }
     }
 }

@@ -1,9 +1,7 @@
 ﻿using Application;
 using DataAccess.Database;
 using DataAccess.Repositories;
-using Domain.Enums;
 using FurnitureWarehouse.Controller;
-using FurnitureWarehouse.Main.Configuration;
 using FurnitureWarehouse.Presentation;
 using FurnitureWarehouse.Service;
 
@@ -11,11 +9,8 @@ namespace FurnitureWarehouse.Main
 {
     public class Startup
     {
-        private readonly AppConfiguration _config;
-
-        public Startup(AppConfiguration config)
+        public Startup()
         {
-            _config = config;
         }
 
         public ConsoleView CreateView()

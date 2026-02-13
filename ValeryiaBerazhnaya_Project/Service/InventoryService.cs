@@ -49,27 +49,32 @@ namespace FurnitureWarehouse.Service
 
         public Furniture? GetById(int id)
         {
-            return _repository.GetAll().FirstOrDefault(f => f.Id == id);
+            return _repository.GetById(id);
         }
 
         public IEnumerable<Furniture> GetByPriceRange(decimal min, decimal max)
         {
-            return _repository
-                .GetAll()
-                .Where(f => f.Price >= min && f.Price <= max);
+            if (min < 0 || max < 0)
+                throw new ArgumentException("Price cannot be negative.");
+
+            if (min > max)
+                throw new ArgumentException("Min price cannot be greater than max price.");
+
+            return _repository.GetByPriceRange(min, max);
         }
 
         public IEnumerable<Furniture> GetByCategoryAndPrice(string category, decimal min, decimal max)
         {
             if (!Enum.TryParse<FurnitureCategory>(category, true, out var parsed))
-                return Enumerable.Empty<Furniture>();
+                throw new ArgumentException("Invalid category.");
 
-            return _repository
-                .GetAll()
-                .Where(f =>
-                    f.Category == parsed &&
-                    f.Price >= min &&
-                    f.Price <= max);
+            if (min < 0 || max < 0)
+                throw new ArgumentException("Price cannot be negative.");
+
+            if (min > max)
+                throw new ArgumentException("Min price cannot be greater than max price.");
+
+            return _repository.GetByCategoryAndPrice(parsed, min, max);
         }
     }
 }
