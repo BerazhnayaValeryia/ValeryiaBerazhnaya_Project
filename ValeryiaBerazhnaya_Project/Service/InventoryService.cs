@@ -1,6 +1,7 @@
 ﻿using FurnitureWarehouse.Domain.Entities;
 using FurnitureWarehouse.Domain.Enums;
 using FurnitureWarehouse.Service.Interfaces;
+using FurnitureWarehouse.Domain.Interfaces;
 
 namespace FurnitureWarehouse.Service
 {

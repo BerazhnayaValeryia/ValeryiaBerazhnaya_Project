@@ -1,4 +1,4 @@
-﻿using Domain.Enums;
+﻿using FurnitureWarehouse.Domain.Enums;
 
 namespace FurnitureWarehouse.Controller.Interfaces
 {

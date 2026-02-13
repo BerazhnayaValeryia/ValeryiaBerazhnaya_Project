@@ -2,6 +2,7 @@
 using FurnitureWarehouse.Domain.Entities;
 using FurnitureWarehouse.Domain.Enums;
 using Microsoft.Data.Sqlite;
+using FurnitureWarehouse.Domain.Interfaces;
 
 namespace DataAccess.Repositories
 {
@@ -92,7 +93,6 @@ namespace DataAccess.Repositories
         public void Update(int id, decimal price, int quantity)
         {
             using var connection = _context.CreateConnection();
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText =
@@ -115,7 +115,6 @@ namespace DataAccess.Repositories
         public void Delete(int id)
         {
             using var connection = _context.CreateConnection();
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = "DELETE FROM Furniture WHERE Id = @id";
@@ -141,7 +140,6 @@ namespace DataAccess.Repositories
         public Furniture? GetById(int id)
         {
             using var connection = _context.CreateConnection();
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = @"
@@ -168,7 +166,6 @@ namespace DataAccess.Repositories
         public IEnumerable<Furniture> GetByPriceRange(decimal min, decimal max)
         {
             using var connection = _context.CreateConnection();
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = @"
@@ -185,13 +182,7 @@ namespace DataAccess.Repositories
 
             while (reader.Read())
             {
-                list.Add(new Furniture(
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    Enum.Parse<FurnitureCategory>(reader.GetString(2)),
-                    reader.GetDecimal(3),
-                    reader.GetInt32(4)
-                ));
+                list.Add(Map(reader));
             }
 
             return list;
@@ -203,7 +194,6 @@ namespace DataAccess.Repositories
     decimal max)
         {
             using var connection = _context.CreateConnection();
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = @"
@@ -222,13 +212,7 @@ namespace DataAccess.Repositories
 
             while (reader.Read())
             {
-                list.Add(new Furniture(
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    Enum.Parse<FurnitureCategory>(reader.GetString(2)),
-                    reader.GetDecimal(3),
-                    reader.GetInt32(4)
-                ));
+                list.Add(Map(reader));
             }
 
             return list;

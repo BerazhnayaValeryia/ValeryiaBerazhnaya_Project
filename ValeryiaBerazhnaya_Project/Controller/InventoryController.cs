@@ -1,5 +1,4 @@
 ﻿using Application;
-using Domain.Enums;
 using FurnitureWarehouse.Controller.Interfaces;
 using FurnitureWarehouse.Domain.Enums;
 using FurnitureWarehouse.Service.Interfaces;
@@ -13,12 +12,13 @@ namespace FurnitureWarehouse.Controller
         private readonly LoginService _loginService;
 
         public InventoryController(
-    IInventoryService service,
-    UserContext userContext)
+            IInventoryService service,
+            UserContext userContext,
+            LoginService loginService)
         {
             _service = service;
             _userContext = userContext;
-            _loginService = new LoginService();
+            _loginService = loginService;
         }
 
         public CommandResult HandleCommand(string input)
@@ -301,19 +301,29 @@ namespace FurnitureWarehouse.Controller
                 return;
             }
 
-            Console.Write("Login: ");
-            var login = Console.ReadLine();
-
-            Console.Write("Password: ");
-            var password = ReadPassword();
-
-            if (_loginService.TryLogin(login!, password!, _userContext))
+            while (true)
             {
-                Console.WriteLine("Login successful. Admin mode enabled.");
-            }
-            else
-            {
-                Console.WriteLine("Invalid credentials.");
+                Console.Write("Login (or 'q' to cancel): ");
+                var login = Console.ReadLine();
+
+                if (login?.ToLower() == "q")
+                    return;
+
+                Console.Write("Password: ");
+                var password = ReadPassword();
+
+                if (_loginService.TryLogin(login!, password!, _userContext, out var message))
+                {
+                    Console.WriteLine(message);
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine(message);
+
+                    if (message.Contains("locked"))
+                        return;
+                }
             }
         }
 

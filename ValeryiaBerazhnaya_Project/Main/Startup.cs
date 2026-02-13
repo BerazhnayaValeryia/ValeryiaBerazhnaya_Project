@@ -1,4 +1,5 @@
-﻿using Application;
+﻿using System.IO;
+using Application;
 using DataAccess.Database;
 using DataAccess.Repositories;
 using FurnitureWarehouse.Controller;
@@ -15,7 +16,12 @@ namespace FurnitureWarehouse.Main
 
         public ConsoleView CreateView()
         {
-            var connectionString = "Data Source=furniture.db";
+            var dbPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "Data",
+                "furniture.db");
+
+            var connectionString = $"Data Source={dbPath}";
 
             var context = new SqliteDbContext(connectionString);
 
@@ -27,7 +33,12 @@ namespace FurnitureWarehouse.Main
 
             var userContext = new UserContext();
 
-            var controller = new InventoryController(service, userContext);
+            var loginService = new LoginService();
+
+            var controller = new InventoryController(
+                service,
+                userContext,
+                loginService);
 
             return new ConsoleView(controller);
         }
